@@ -25,7 +25,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <paper.api.version>[26.1.2.build,)</paper.api.version>
     <bukkit.api.version>1.13</bukkit.api.version>
-    <kyori.version>4.26.1</kyori.version>
+    <kyori.version>5.0.1</kyori.version>
     <minimessage.version>4.26.1</minimessage.version>
     <!-- adventure-platform-bukkit uses a separate versioning line; keep managed here -->
     <adventure.platform.version>4.4.1</adventure.platform.version>
