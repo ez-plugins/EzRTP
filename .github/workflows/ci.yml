@@ -91,6 +91,8 @@ jobs:
   feature-tests:
     name: Feature Tests
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout
@@ -104,7 +106,20 @@ jobs:
           cache: maven
 
       - name: Run feature tests
-        run: mvn -B -ntp -pl ezrtp-bukkit -am -Pmessage-tests -Dspotless.check.skip=true test
+        run: |
+          mvn -B -ntp -pl ezrtp-bukkit -am -Pmessage-tests -Dspotless.check.skip=true \
+            org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.12:report
+
+      - name: Upload feature coverage to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+          files: ./ezrtp-common/target/site/jacoco/jacoco.xml,./ezrtp-bukkit/target/site/jacoco/jacoco.xml,./ezrtp-paper/target/site/jacoco/jacoco.xml
+          flags: feature
+          name: ezrtp-feature
 
   server-smoke-test:
     name: Server Smoke Test (${{ matrix.name }})
