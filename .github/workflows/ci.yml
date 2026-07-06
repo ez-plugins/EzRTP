@@ -131,7 +131,7 @@ jobs:
           PROJECT_URL="https://fill.papermc.io/v3/projects/${PROJECT}"
           SELECTOR="${{ matrix.version_selector }}"
           MC_VERSION=$(curl -fsSL -H "User-Agent: ${PAPERMC_USER_AGENT}" "${PROJECT_URL}" | \
-            python3 -c "import sys,json; data=json.load(sys.stdin)['versions']; versions=[v for group in data.values() for v in group]; uniq=sorted(set(versions), key=lambda s:[int(x) if x.isdigit() else x for x in s.replace('-', '.').split('.')]); selector=sys.argv[1]; matches=[v for v in uniq if v == selector or v.startswith(selector + '.')]; print(uniq[-1] if selector == 'latest' else (matches[0] if matches else (_ for _ in ()).throw(SystemExit(f'No versions matching selector {selector}'))))" "$SELECTOR")
+            python3 -c "import re,sys,json; data=json.load(sys.stdin)['versions']; versions=[v for group in data.values() for v in group]; selector=sys.argv[1]; part=lambda p:(0,int(p)) if p.isdigit() else (1,p); key=lambda v: tuple(part(p) for p in re.split(r'[.-]', v)); uniq=sorted(set(versions), key=key); matches=[v for v in uniq if v == selector or v.startswith(selector + '.')]; print(uniq[-1] if selector == 'latest' else (matches[0] if matches else (_ for _ in ()).throw(SystemExit(f'No versions matching selector {selector}'))))" "$SELECTOR")
           BUILDS_JSON=$(curl -fsSL -H "User-Agent: ${PAPERMC_USER_AGENT}" "${PROJECT_URL}/versions/${MC_VERSION}/builds")
           BUILD=$(printf '%s' "$BUILDS_JSON" | \
             python3 -c "import sys,json; builds=json.load(sys.stdin); stable=[b for b in builds if b.get('channel') == 'STABLE']; selected=(stable[0] if stable else builds[0]); print(selected['id'])")
