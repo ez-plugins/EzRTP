@@ -58,6 +58,8 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout
@@ -78,10 +80,10 @@ jobs:
             org.jacoco:jacoco-maven-plugin:0.8.12:report
 
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: ./ezrtp-common/target/site/jacoco/jacoco.xml,./ezrtp-bukkit/target/site/jacoco/jacoco.xml,./ezrtp-paper/target/site/jacoco/jacoco.xml
           flags: unit
           name: ezrtp-unit
