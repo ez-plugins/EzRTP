@@ -91,10 +91,20 @@ jobs:
       - name: Run feature tests
         run: mvn -B -ntp -pl ezrtp-bukkit -am -Pmessage-tests -Dspotless.check.skip=true test
 
-  folia-smoke-test:
-    name: Folia Smoke Test
+  server-smoke-test:
+    name: Server Smoke Test (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: [unit-tests, feature-tests]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: folia-latest
+            project: folia
+            version_selector: latest
+          - name: paper-1.13
+            project: paper
+            version_selector: 1.13
     env:
       PAPERMC_USER_AGENT: EzRTP-CI/1.0 (https://github.com/${{ github.repository }})
 
@@ -114,28 +124,31 @@ jobs:
           mvn -B -ntp -pl ezrtp-bukkit,ezrtp-paper -am -DskipTests -Dspotless.check.skip=true \
             package
 
-      - name: Resolve latest Folia build
-        id: folia
+      - name: Resolve server build (${{ matrix.name }})
+        id: server
         run: |
-          PROJECT_URL="https://fill.papermc.io/v3/projects/folia"
+          PROJECT="${{ matrix.project }}"
+          PROJECT_URL="https://fill.papermc.io/v3/projects/${PROJECT}"
+          SELECTOR="${{ matrix.version_selector }}"
           MC_VERSION=$(curl -fsSL -H "User-Agent: ${PAPERMC_USER_AGENT}" "${PROJECT_URL}" | \
-            python3 -c "import sys,json; versions=json.load(sys.stdin)['versions']; first_group=next(iter(versions)); print(versions[first_group][0])")
+            python3 -c "import re,sys,json; data=json.load(sys.stdin)['versions']; versions=[v for group in data.values() for v in group]; selector=sys.argv[1]; part=lambda p:(0,int(p)) if p.isdigit() else (1,p); key=lambda v: tuple(part(p) for p in re.split(r'[.-]', v)); uniq=sorted(set(versions), key=key); matches=[v for v in uniq if v == selector or v.startswith(selector + '.')]; print(uniq[-1] if selector == 'latest' else (matches[0] if matches else (_ for _ in ()).throw(SystemExit(f'No versions matching selector {selector}'))))" "$SELECTOR")
           BUILDS_JSON=$(curl -fsSL -H "User-Agent: ${PAPERMC_USER_AGENT}" "${PROJECT_URL}/versions/${MC_VERSION}/builds")
           BUILD=$(printf '%s' "$BUILDS_JSON" | \
             python3 -c "import sys,json; builds=json.load(sys.stdin); stable=[b for b in builds if b.get('channel') == 'STABLE']; selected=(stable[0] if stable else builds[0]); print(selected['id'])")
           DOWNLOAD_URL=$(printf '%s' "$BUILDS_JSON" | \
             python3 -c "import sys,json; builds=json.load(sys.stdin); stable=[b for b in builds if b.get('channel') == 'STABLE']; selected=(stable[0] if stable else builds[0]); print(selected['downloads']['server:default']['url'])")
+          echo "project=${PROJECT}"     >> "$GITHUB_OUTPUT"
           echo "mc_version=${MC_VERSION}" >> "$GITHUB_OUTPUT"
           echo "build=${BUILD}"           >> "$GITHUB_OUTPUT"
           echo "download_url=${DOWNLOAD_URL}" >> "$GITHUB_OUTPUT"
-          echo "Resolved: Folia ${MC_VERSION} build ${BUILD}"
+          echo "Resolved: ${PROJECT} ${SELECTOR} -> ${MC_VERSION} build ${BUILD}"
 
-      - name: Download Folia server JAR
+      - name: Download server JAR
         run: |
           mkdir -p smoke-server/plugins
           curl -fsSL -H "User-Agent: ${PAPERMC_USER_AGENT}" \
-            "${{ steps.folia.outputs.download_url }}" \
-            -o smoke-server/folia.jar
+            "${{ steps.server.outputs.download_url }}" \
+            -o smoke-server/server.jar
 
       - name: Copy plugin JARs
         run: |
@@ -155,7 +168,7 @@ jobs:
       - name: Run server and wait for ready
         run: |
           cd smoke-server
-          java -Xms512m -Xmx1g -jar folia.jar --nogui > server.log 2>&1 &
+          java -Xms512m -Xmx1g -jar server.jar --nogui > server.log 2>&1 &
           SERVER_PID=$!
           ELAPSED=0
           while [ $ELAPSED -lt 120 ]; do
@@ -174,12 +187,12 @@ jobs:
         run: |
           LOG=smoke-server/server.log
           if grep -qiE "SEVERE.*[Ee]z[Rr][Tt][Pp]|Could not load.*[Ee]z[Rr][Tt][Pp]|Error.*[Ee]z[Rr][Tt][Pp]" "$LOG"; then
-            echo "::error::EzRTP logged errors on Folia startup:"
+            echo "::error::EzRTP logged errors on server startup:"
             grep -iE  "SEVERE.*[Ee]z[Rr][Tt][Pp]|Could not load.*[Ee]z[Rr][Tt][Pp]|Error.*[Ee]z[Rr][Tt][Pp]" "$LOG"
             exit 1
           fi
           if grep -q "Ready\." "$LOG"; then
-            echo "Folia smoke test passed — EzRTP reached Ready state."
+            echo "Server smoke test passed — EzRTP reached Ready state."
           else
             echo "::warning::EzRTP 'Ready.' not found in log — server may not have finished loading within the timeout"
           fi
@@ -188,7 +201,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: folia-smoke-server-log
+          name: smoke-server-log-${{ matrix.name }}
           path: smoke-server/server.log
           retention-days: 7
 
