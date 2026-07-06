@@ -23,7 +23,7 @@ jobs:
       #  1. CHECKOUT
       # ──────────────────────────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # For push:tags: github.ref is the tag ref (e.g. refs/tags/v3.0.3).
           # For workflow_dispatch: github.ref is the branch (e.g. refs/heads/main).
