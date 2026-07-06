@@ -20,6 +20,37 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ---
 
+## [3.4.1] - 2026-07-06
+
+### Added
+
+- Minecraft `26.2` compatibility updates:
+  - added `SULFUR_CAVES` to rare-biome defaults/search paths,
+  - updated biome compatibility handling for modern registry-based lookup paths.
+
+### Changed
+
+- CI server download resolution migrated to PaperMC Fill API (`fill.papermc.io`) and now sends an explicit non-generic `User-Agent` header as required by the service.
+- Smoke testing workflow expanded from a single Folia target to a matrix that validates:
+  - latest Folia build, and
+  - Paper `1.13.x` for earliest supported compatibility coverage.
+- Dependency and tooling updates merged via Dependabot:
+  - `com.github.ez-plugins:teams-api` `1.8.0` -> `2.4.0`.
+  - GitHub Actions `actions/checkout` `v6` -> `v7`.
+  - GitHub Actions `DavidAnson/markdownlint-cli2-action` `v23` -> `v24`.
+- Kyori Adventure BOM and related versions moved to `5.2.0` for current Paper API compatibility.
+
+### Fixed
+
+- GitHub Actions workflow resolver for smoke-test target versions:
+  - fixed YAML parsing issues in embedded resolver scripting,
+  - fixed selector propagation into Python resolver invocation,
+  - fixed mixed-type version sort key handling that could fail on Paper version token comparisons.
+- Removed a duplicate stale block in `messages/en.yml` that produced duplicate-key warnings at startup.
+- Replaced deprecated `Biome.valueOf`/`Biome.values` usage with compatibility-safe registry-backed resolution paths used across biome-related logic.
+
+---
+
 ## [3.4.0] - 2026-05-24
 
 ### Added
