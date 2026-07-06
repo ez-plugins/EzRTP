@@ -5,13 +5,13 @@
   <parent>
     <groupId>com.skyblockexp</groupId>
     <artifactId>ezrtp-parent</artifactId>
-    <version>3.4.0</version>
+    <version>3.4.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-paper</artifactId>
-  <version>3.4.0</version>
+  <version>3.4.1</version>
   <packaging>jar</packaging>
   <name>EzRTP (Paper)</name>
   <description>Paper-optimized module for EzRTP</description>
@@ -32,7 +32,7 @@
     <dependency>
       <groupId>com.skyblockexp</groupId>
       <artifactId>ezrtp-common</artifactId>
-      <version>3.4.0</version>
+      <version>3.4.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
