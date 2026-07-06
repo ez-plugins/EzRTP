@@ -71,7 +71,20 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn -B -ntp -pl ezrtp-bukkit,ezrtp-paper -am -Dspotless.check.skip=true test
+        run: |
+          mvn -B -ntp -pl ezrtp-bukkit,ezrtp-paper -am -Dspotless.check.skip=true \
+            org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent \
+            test \
+            org.jacoco:jacoco-maven-plugin:0.8.12:report
+
+      - name: Upload coverage to Codecov
+        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./ezrtp-common/target/site/jacoco/jacoco.xml,./ezrtp-bukkit/target/site/jacoco/jacoco.xml,./ezrtp-paper/target/site/jacoco/jacoco.xml
+          flags: unit
+          name: ezrtp-unit
 
   feature-tests:
     name: Feature Tests
