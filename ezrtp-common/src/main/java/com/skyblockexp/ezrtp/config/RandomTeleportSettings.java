@@ -10,6 +10,7 @@ import com.skyblockexp.ezrtp.config.effects.CountdownBossBarSettings;
 import com.skyblockexp.ezrtp.config.effects.CountdownParticleSettings;
 import com.skyblockexp.ezrtp.config.effects.ParticleSettings;
 import org.bukkit.Material;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 import com.skyblockexp.ezrtp.util.MessageUtil;
@@ -697,10 +698,8 @@ public final class RandomTeleportSettings {
         }
         for (Object o : section.getList(key)) {
             if (o instanceof String s) {
-                try {
-                    biomes.add(Biome.valueOf(s.toUpperCase(java.util.Locale.ROOT)));
-                } catch (IllegalArgumentException ignored) {
-                }
+                Biome b = BiomeCompat.safeValueOf(s);
+                if (b != null) biomes.add(b);
             }
         }
         return biomes;

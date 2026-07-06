@@ -1,5 +1,6 @@
 package com.skyblockexp.ezrtp.config.biome;
 
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -138,11 +139,8 @@ public final class RareBiomeOptimizationSettings {
             rareBiomes = getDefaultRareBiomes();
         } else {
             for (String biomeName : biomeNames) {
-                try {
-                    rareBiomes.add(Biome.valueOf(biomeName.toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    // Skip invalid biome names
-                }
+                Biome b = BiomeCompat.safeValueOf(biomeName);
+                if (b != null) rareBiomes.add(b);
             }
         }
         
@@ -186,15 +184,13 @@ public final class RareBiomeOptimizationSettings {
             "FLOWER_FOREST",
             "MODIFIED_JUNGLE",
             "MODIFIED_JUNGLE_EDGE",
-            "DEEP_DARK"
+            "DEEP_DARK",
+            "SULFUR_CAVES"
         };
         
         for (String biomeName : defaultRareBiomes) {
-            try {
-                rare.add(Biome.valueOf(biomeName));
-            } catch (IllegalArgumentException e) {
-                // Some biomes might not exist in all versions
-            }
+            Biome b = BiomeCompat.safeValueOf(biomeName);
+            if (b != null) rare.add(b);
         }
         
         return rare;

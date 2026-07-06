@@ -68,6 +68,7 @@ public interface Biome extends Keyed {
   Biome SPARSE_JUNGLE = BiomeShim.of("SPARSE_JUNGLE");
   Biome STONY_PEAKS = BiomeShim.of("STONY_PEAKS");
   Biome STONY_SHORE = BiomeShim.of("STONY_SHORE");
+  Biome SULFUR_CAVES = BiomeShim.of("SULFUR_CAVES");
   Biome SUNFLOWER_PLAINS = BiomeShim.of("SUNFLOWER_PLAINS");
   Biome SWAMP = BiomeShim.of("SWAMP");
   Biome TAIGA = BiomeShim.of("TAIGA");

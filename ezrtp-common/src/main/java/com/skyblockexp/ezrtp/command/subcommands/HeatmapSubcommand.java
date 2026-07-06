@@ -109,9 +109,8 @@ public class HeatmapSubcommand extends Subcommand {
         // Check for biome parameter
         Biome targetBiome = null;
         if (args.length > 0) {
-            try {
-                targetBiome = Biome.valueOf(args[0].toUpperCase());
-            } catch (IllegalArgumentException e) {
+            targetBiome = BiomeCompat.safeValueOf(args[0]);
+            if (targetBiome == null) {
                 sender.sendMessage("§cInvalid biome: " + args[0]);
                 return true;
             }
@@ -133,7 +132,7 @@ public class HeatmapSubcommand extends Subcommand {
             suggestions.add(SAVE_SUBCOMMAND);
             suggestions.add(CLAIMS_OVERLAY_FLAG);
             // Add biome names
-            for (Biome biome : Biome.values()) {
+            for (Biome biome : org.bukkit.Registry.BIOME) {
                 suggestions.add(BiomeCompat.safeName(biome).toLowerCase());
             }
             return suggestions;

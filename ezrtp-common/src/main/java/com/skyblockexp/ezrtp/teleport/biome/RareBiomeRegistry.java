@@ -74,7 +74,8 @@ public final class RareBiomeRegistry {
             "FLOWER_FOREST",
             "MODIFIED_JUNGLE",
             "MODIFIED_JUNGLE_EDGE",
-            "DEEP_DARK"
+            "DEEP_DARK",
+            "SULFUR_CAVES"
         }) {
             Biome b = BiomeCompat.safeValueOf(name);
             if (b != null) rare.add(b);
@@ -298,12 +299,8 @@ public final class RareBiomeRegistry {
         this.storage = hotspotStorage;
         List<HotspotStorage.HotspotRecord> records = hotspotStorage.loadAll();
         for (HotspotStorage.HotspotRecord rec : records) {
-            Biome biome;
-            try {
-                biome = Biome.valueOf(rec.biome());
-            } catch (IllegalArgumentException e) {
-                continue; // biome no longer exists in this server version
-            }
+            Biome biome = BiomeCompat.safeValueOf(rec.biome());
+            if (biome == null) continue;
             if (!isRareBiome(biome)) {
                 continue;
             }

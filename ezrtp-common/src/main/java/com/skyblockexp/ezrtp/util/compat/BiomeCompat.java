@@ -1,5 +1,7 @@
 package com.skyblockexp.ezrtp.util.compat;
 
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.Biome;
 
 /**
@@ -48,10 +50,6 @@ public final class BiomeCompat {
         if (name == null || name.isBlank()) {
             return null;
         }
-        try {
-            return Biome.valueOf(name.toUpperCase(java.util.Locale.ROOT));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
+        return Registry.BIOME.get(NamespacedKey.minecraft(name.toLowerCase(java.util.Locale.ROOT)));
     }
 }
