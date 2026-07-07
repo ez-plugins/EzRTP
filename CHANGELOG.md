@@ -20,6 +20,20 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ---
 
+## [3.4.2] - 2026-07-07
+
+### Fixed
+
+- `/rtp reload` now immediately applies GUI configuration updates from `gui.yml` by rebuilding GUI rendering from the current in-memory configuration instead of startup-cached values.
+- Reload now closes both standard RTP GUI sessions and faction-claim GUI sessions so open inventories cannot retain stale pre-reload settings.
+
+### Added
+
+- Focused regression test coverage for GUI reload behavior:
+  - `RandomTeleportGuiManagerReloadConfigTest` verifies that opening the GUI after configuration replacement uses the updated title and row count immediately.
+
+---
+
 ## [3.4.1] - 2026-07-06
 
 ### Added

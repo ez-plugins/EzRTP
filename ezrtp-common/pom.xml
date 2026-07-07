@@ -5,13 +5,13 @@
   <parent>
     <groupId>com.skyblockexp</groupId>
     <artifactId>ezrtp-parent</artifactId>
-    <version>3.4.1</version>
+    <version>3.4.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-common</artifactId>
-  <version>3.4.1</version>
+  <version>3.4.2</version>
   <packaging>jar</packaging>
   <name>EzRTP Common</name>
   <description>Shared utilities for EzRTP (platform-independent)</description>
