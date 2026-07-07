@@ -52,7 +52,6 @@ public final class RandomTeleportGuiManager implements Listener {
     private final RtpUsageStorage usageStorage;
     private final Supplier<MessageProvider> messageSupplier;
 
-    private final GuiBuilder guiBuilder;
     private final GuiSessionManager sessionManager;
 
     // Use TextRenderer for runtime-compatible parsing
@@ -72,15 +71,6 @@ public final class RandomTeleportGuiManager implements Listener {
 
         // Initialize helper classes
         this.sessionManager = new GuiSessionManager();
-        java.util.logging.Logger fallbackLogger = java.util.logging.Logger.getLogger(RandomTeleportGuiManager.class.getSimpleName());
-        java.util.logging.Logger effectiveLogger = plugin != null ? plugin.getLogger() : fallbackLogger;
-        this.guiBuilder = new GuiBuilder(
-            configurationSupplier.get(),
-            usageStorage,
-            teleportServiceSupplier.get() != null ? teleportServiceSupplier.get().getBiomeCache() : null,
-            networkServiceSupplier.get(),
-            effectiveLogger
-        );
     }
 
     /**
@@ -112,7 +102,8 @@ public final class RandomTeleportGuiManager implements Listener {
             }
         }
 
-        // Build the GUI
+        // Build the GUI from current suppliers so /ezrtp reload immediately reflects gui.yml changes.
+        GuiBuilder guiBuilder = createGuiBuilder(configuration);
         GuiBuilder.GuiBuildResult result = guiBuilder.buildGui(player);
 
         // Check if we have any options to display
@@ -162,6 +153,19 @@ public final class RandomTeleportGuiManager implements Listener {
         } catch (Throwable ignored) {
             // Some server implementations may not support forcing an update here; ignore safely.
         }
+    }
+
+    private GuiBuilder createGuiBuilder(EzRtpConfiguration configuration) {
+        java.util.logging.Logger fallbackLogger = java.util.logging.Logger.getLogger(RandomTeleportGuiManager.class.getSimpleName());
+        java.util.logging.Logger effectiveLogger = plugin != null ? plugin.getLogger() : fallbackLogger;
+        RandomTeleportService teleportService = teleportServiceSupplier.get();
+        return new GuiBuilder(
+                configuration,
+                usageStorage,
+                teleportService != null ? teleportService.getBiomeCache() : null,
+                networkServiceSupplier.get(),
+                effectiveLogger
+        );
     }
 
     public void closeAll() {

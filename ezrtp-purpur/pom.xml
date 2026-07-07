@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.skyblockexp</groupId>
     <artifactId>ezrtp-parent</artifactId>
-    <version>3.4.1</version>
+    <version>3.4.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -18,12 +18,12 @@
     <dependency>
       <groupId>com.skyblockexp</groupId>
       <artifactId>ezrtp-paper</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>com.skyblockexp</groupId>
       <artifactId>ezrtp-common</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

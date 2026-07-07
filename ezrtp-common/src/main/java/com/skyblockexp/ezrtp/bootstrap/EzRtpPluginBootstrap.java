@@ -18,6 +18,7 @@ import com.skyblockexp.ezrtp.economy.EconomyService;
 import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationStatistics;
+import com.skyblockexp.ezrtp.gui.FactionClaimSelectionGuiManager;
 import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
 import com.skyblockexp.ezrtp.integration.EzCountdownDisplayBridge;
 import com.skyblockexp.ezrtp.integration.EzCountdownDisplayBridgeImpl;
@@ -332,6 +333,10 @@ public final class EzRtpPluginBootstrap {
         RandomTeleportGuiManager guiManager = listenerRegistrar.getGuiManager();
         if (guiManager != null) {
             guiManager.closeAll();
+        }
+        FactionClaimSelectionGuiManager factionClaimGuiManager = listenerRegistrar.getFactionClaimGuiManager();
+        if (factionClaimGuiManager != null) {
+            factionClaimGuiManager.closeAll();
         }
         configurationService.validateEconomyConfiguration(configuration, economyService);
 

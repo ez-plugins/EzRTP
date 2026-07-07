@@ -4,7 +4,7 @@
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-parent</artifactId>
-  <version>3.4.1</version>
+  <version>3.4.2</version>
   <packaging>pom</packaging>
   <name>EzRTP Parent</name>
   <description>Aggregator POM for EzRTP multi-module build</description>
