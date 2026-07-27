@@ -20,6 +20,21 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ---
 
+## [3.4.3] - 2026-07-27
+
+### Fixed
+
+- Fixed `/rtp` intermittently failing (observed on Purpur) with `CompletionException - java.lang.IllegalArgumentException: argument type mismatch` during async location search. The Folia region/global-scheduler reflection bridges in `PaperPlatformScheduler` and `BukkitPlatformScheduler` only caught `ReflectiveOperationException` around `Method.invoke()` calls; they now also catch `RuntimeException` and fall back to the standard Bukkit scheduler instead of letting the exception propagate. This can occur even on non-Folia servers whose classpath carries the Folia regionized-runtime marker class.
+- `BukkitPlatformScheduler#executeRegion`/`executeGlobal`/`executeGlobalDelayed`/`executeRegionDelayed` now consistently fall back to the standard Bukkit scheduler when the reflective Folia scheduler call fails, instead of silently dropping the task (matching existing `PaperPlatformScheduler` behavior).
+
+### Added
+
+- Regression test coverage for the scheduler reflection-fallback fix:
+  - `PaperPlatformSchedulerReflectionFallbackTest` and `BukkitPlatformSchedulerReflectionFallbackTest` simulate a broken region/global-scheduler reflection call and verify the submitted task still runs via the standard scheduler fallback.
+  - `PlatformRuntimeCapabilities.PURPUR_REGIONIZED` constant documenting the exact capability combination that triggered the bug.
+
+---
+
 ## [3.4.2] - 2026-07-07
 
 ### Fixed

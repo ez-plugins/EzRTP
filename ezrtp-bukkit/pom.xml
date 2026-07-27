@@ -5,13 +5,13 @@
   <parent>
     <groupId>com.skyblockexp</groupId>
     <artifactId>ezrtp-parent</artifactId>
-    <version>3.4.2</version>
+    <version>3.4.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-bukkit</artifactId>
-  <version>3.4.2</version>
+  <version>3.4.3</version>
   <packaging>jar</packaging>
   <name>EzRTP (Bukkit)</name>
   <description>EzRTP Bukkit-compatible plugin module.</description>
@@ -111,7 +111,7 @@
     <dependency>
       <groupId>com.skyblockexp</groupId>
       <artifactId>ezrtp-common</artifactId>
-      <version>3.4.2</version>
+      <version>3.4.3</version>
     </dependency>
   </dependencies>
 
