@@ -8,6 +8,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public final class BukkitPlatformScheduler implements PlatformScheduler {
 
@@ -35,12 +36,15 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
     @Override
     public void executeRegion(World world, int chunkX, int chunkZ, Runnable task) {
         if (capabilities.regionizedRuntime()) {
-            if (world != null) {
-                invokeRegionTask(world, chunkX, chunkZ, task);
-            } else {
-                invokeGlobalRun(task);
+            boolean handled = world != null
+                    ? invokeRegionTask(world, chunkX, chunkZ, task)
+                    : invokeGlobalRun(task);
+            if (handled) {
+                return;
             }
-            return;
+            // Regionized runtime was detected but the reflective call failed unexpectedly
+            // (e.g. an API signature mismatch). Falling through to the standard scheduler
+            // is safer than silently dropping the task.
         }
         plugin.getServer().getScheduler().runTask(plugin, task);
     }
@@ -63,8 +67,7 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
 
     @Override
     public void executeGlobal(Runnable task) {
-        if (capabilities.regionizedRuntime()) {
-            invokeGlobalRun(task);
+        if (capabilities.regionizedRuntime() && invokeGlobalRun(task)) {
             return;
         }
         plugin.getServer().getScheduler().runTask(plugin, task);
@@ -77,7 +80,8 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             if (foliaTask != null) {
                 return foliaTask;
             }
-            return () -> {};
+            // Reflective call failed unexpectedly; fall through to the standard scheduler
+            // rather than returning a no-op that would silently drop the task.
         }
         org.bukkit.scheduler.BukkitTask bukkit =
                 plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
@@ -88,12 +92,12 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
     public void executeRegionDelayed(
             World world, int chunkX, int chunkZ, Runnable task, long delayTicks) {
         if (capabilities.regionizedRuntime()) {
-            if (world != null) {
-                invokeRegionDelayed(world, chunkX, chunkZ, task, delayTicks);
-            } else {
-                invokeGlobalRunDelayed(task, delayTicks);
+            boolean handled = world != null
+                    ? invokeRegionDelayed(world, chunkX, chunkZ, task, delayTicks)
+                    : invokeGlobalRunDelayed(task, delayTicks) != null;
+            if (handled) {
+                return;
             }
-            return;
         }
         plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
     }
@@ -114,8 +118,11 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
         try {
             Method method = player.getClass().getMethod("teleportAsync", Location.class);
             return (CompletableFuture<Boolean>) method.invoke(player, destination);
-        } catch (ReflectiveOperationException ignored) {
-            // teleportAsync not available (shouldn't happen on Folia); fall back to sync.
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            // teleportAsync not available, or the reflective call failed due to an API
+            // signature change on a newer/forked server; fall back to sync teleport rather
+            // than propagating the failure into the async RTP search chain.
+            logReflectionFallback("teleportAsync", ex);
             return CompletableFuture.completedFuture(player.teleport(destination));
         }
     }
@@ -128,7 +135,8 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             run.invoke(globalScheduler, plugin,
                     (java.util.function.Consumer<Object>) ignored -> task.run());
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#run", ex);
             return false;
         }
     }
@@ -144,10 +152,11 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             return () -> {
                 try {
                     cancel.invoke(scheduledTask);
-                } catch (ReflectiveOperationException ignored) {
+                } catch (ReflectiveOperationException | RuntimeException ignored) {
                 }
             };
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#runDelayed", ex);
             return null;
         }
     }
@@ -161,7 +170,8 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             run.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
                     (java.util.function.Consumer<Object>) ignored -> task.run());
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getRegionScheduler#run", ex);
             return false;
         }
     }
@@ -176,7 +186,8 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             runDelayed.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
                     (java.util.function.Consumer<Object>) ignored -> task.run(), delayTicks);
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getRegionScheduler#runDelayed", ex);
             return false;
         }
     }
@@ -198,11 +209,27 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
             return () -> {
                 try {
                     cancel.invoke(scheduledTask);
-                } catch (ReflectiveOperationException ignored) {
+                } catch (ReflectiveOperationException | RuntimeException ignored) {
                 }
             };
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#runAtFixedRate", ex);
             return null;
         }
+    }
+
+    /**
+     * Logs a fine-level diagnostic when a Folia/region-scheduler reflection call fails.
+     *
+     * <p>Reflective calls into region-scheduler APIs can fail with more than just
+     * {@link ReflectiveOperationException} — a signature change on a newer or forked
+     * server (e.g. Purpur) can surface as {@link IllegalArgumentException} ("argument
+     * type mismatch") from {@link Method#invoke}. These are caught broadly so a single
+     * unexpected API drift falls back to the standard scheduler instead of breaking
+     * the caller (notably the async RTP location search).
+     */
+    private void logReflectionFallback(String operation, Throwable ex) {
+        plugin.getLogger().log(Level.FINE, "EzRTP: region-scheduler reflection call " + operation
+                + " failed, falling back to standard scheduler", ex);
     }
 }

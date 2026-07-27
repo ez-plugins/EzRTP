@@ -13,6 +13,15 @@ public record PlatformRuntimeCapabilities(boolean paperApi, boolean purpurApi, b
     public static final PlatformRuntimeCapabilities PAPER_FOLIA = new PlatformRuntimeCapabilities(true, false, true);
     public static final PlatformRuntimeCapabilities PURPUR = new PlatformRuntimeCapabilities(true, true, false);
 
+    /**
+     * A non-Folia Purpur (or Paper) build whose server classpath nonetheless carries the
+     * Folia regionized-runtime marker class, so {@code regionizedRuntime()} is detected as
+     * {@code true} even though the server is not actually running region-threaded. This is
+     * the exact combination reported against Purpur builds where the region-scheduler
+     * reflection path is exercised but not necessarily functional.
+     */
+    public static final PlatformRuntimeCapabilities PURPUR_REGIONIZED = new PlatformRuntimeCapabilities(true, true, true);
+
     public boolean isStrictPaper() {
         return paperApi && !purpurApi;
     }

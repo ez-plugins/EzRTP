@@ -23,7 +23,7 @@ public final class ParticleCompat {
                     double.class, double.class, double.class, double.class, Object.class, boolean.class);
             m.invoke(world, particle, loc, count, offsetX, offsetY, offsetZ, extra, data, force);
             return;
-        } catch (ReflectiveOperationException | LinkageError ignored) {}
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {}
 
         try {
             // Try alternate signature: spawnParticle(Particle, Location, int, double, double, double, double)
@@ -31,7 +31,7 @@ public final class ParticleCompat {
                     double.class, double.class, double.class, double.class);
             m2.invoke(world, particle, loc, count, offsetX, offsetY, offsetZ, extra);
             return;
-        } catch (ReflectiveOperationException | LinkageError ignored) {}
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {}
 
         try {
             // Legacy: spawnParticle(Location, Particle, int, double, double, double)
@@ -39,7 +39,7 @@ public final class ParticleCompat {
                     double.class, double.class, double.class);
             m3.invoke(world, loc, particle, count, offsetX, offsetY, offsetZ);
             return;
-        } catch (ReflectiveOperationException | LinkageError ignored) {}
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {}
 
         // Give up silently if no compatible method is found.
     }

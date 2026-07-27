@@ -8,6 +8,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public final class PaperPlatformScheduler implements PlatformScheduler {
 
@@ -55,7 +56,8 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             Method runNow = asyncScheduler.getClass().getMethod("runNow", Plugin.class, java.util.function.Consumer.class);
             runNow.invoke(asyncScheduler, plugin, (java.util.function.Consumer<Object>) scheduledTask -> task.run());
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getAsyncScheduler#runNow", ex);
             return false;
         }
     }
@@ -69,7 +71,8 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             run.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
                     (java.util.function.Consumer<Object>) scheduledTask -> task.run());
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getRegionScheduler#run", ex);
             return false;
         }
     }
@@ -120,7 +123,8 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             run.invoke(globalScheduler, plugin,
                     (java.util.function.Consumer<Object>) ignored -> task.run());
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#run", ex);
             return false;
         }
     }
@@ -136,10 +140,11 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             return () -> {
                 try {
                     cancel.invoke(scheduledTask);
-                } catch (ReflectiveOperationException ignored) {
+                } catch (ReflectiveOperationException | RuntimeException ignored) {
                 }
             };
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#runDelayed", ex);
             return null;
         }
     }
@@ -154,7 +159,8 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             runDelayed.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
                     (java.util.function.Consumer<Object>) ignored -> task.run(), delayTicks);
             return true;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getRegionScheduler#runDelayed", ex);
             return false;
         }
     }
@@ -177,11 +183,27 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
             return () -> {
                 try {
                     cancel.invoke(scheduledTask);
-                } catch (ReflectiveOperationException ignored) {
+                } catch (ReflectiveOperationException | RuntimeException ignored) {
                 }
             };
-        } catch (ReflectiveOperationException ignored) {
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            logReflectionFallback("getGlobalRegionScheduler#runAtFixedRate", ex);
             return null;
         }
+    }
+
+    /**
+     * Logs a fine-level diagnostic when a Folia/region-scheduler reflection call fails.
+     *
+     * <p>Reflective calls into region-scheduler APIs can fail with more than just
+     * {@link ReflectiveOperationException} — a signature change on a newer or forked
+     * server (e.g. Purpur) can surface as {@link IllegalArgumentException} ("argument
+     * type mismatch") from {@link Method#invoke}. These are caught broadly so a single
+     * unexpected API drift falls back to the standard scheduler instead of breaking
+     * the caller (notably the async RTP location search).
+     */
+    private void logReflectionFallback(String operation, Throwable ex) {
+        plugin.getLogger().log(Level.FINE, "EzRTP: region-scheduler reflection call " + operation
+                + " failed, falling back to standard scheduler", ex);
     }
 }

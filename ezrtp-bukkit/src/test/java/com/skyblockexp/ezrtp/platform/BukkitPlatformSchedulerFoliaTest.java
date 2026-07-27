@@ -48,6 +48,7 @@ class BukkitPlatformSchedulerFoliaTest {
     void setUp() {
         when(plugin.getServer()).thenReturn(server);
         when(server.getScheduler()).thenReturn(bukkitScheduler);
+        when(plugin.getLogger()).thenReturn(java.util.logging.Logger.getLogger("test"));
     }
 
     // --- scheduleRepeating ---
@@ -79,7 +80,9 @@ class BukkitPlatformSchedulerFoliaTest {
      */
     @Test
     void scheduleRepeating_withFoliaCapabilities_doesNotThrow() {
-        // No stub needed: the fixed implementation never reaches the Bukkit scheduler on Folia.
+        // scheduleRepeating intentionally stays a no-op on reflection failure (rather than
+        // falling back to the standard scheduler) since Folia forbids synchronous scheduling
+        // outright; see the comment in BukkitPlatformScheduler#scheduleRepeating.
         BukkitPlatformScheduler scheduler =
                 new BukkitPlatformScheduler(plugin, PlatformRuntimeCapabilities.PAPER_FOLIA);
 
@@ -110,11 +113,16 @@ class BukkitPlatformSchedulerFoliaTest {
 
     @Test
     void executeGlobal_withFoliaCapabilities_doesNotThrow() {
-        // No stub: the fix never reaches the Bukkit scheduler when regionizedRuntime=true.
+        // Reflection naturally fails in the test JVM (no Folia classes present), so this
+        // now falls through to the standard Bukkit scheduler, matching PaperPlatformScheduler.
+        BukkitTask mockTask = mock(BukkitTask.class);
+        when(bukkitScheduler.runTask(any(Plugin.class), any(Runnable.class))).thenReturn(mockTask);
+
         BukkitPlatformScheduler scheduler =
                 new BukkitPlatformScheduler(plugin, PlatformRuntimeCapabilities.PAPER_FOLIA);
 
         assertDoesNotThrow(() -> scheduler.executeGlobal(() -> {}));
+        verify(bukkitScheduler).runTask(eq(plugin), any(Runnable.class));
     }
 
     @Test
@@ -134,7 +142,12 @@ class BukkitPlatformSchedulerFoliaTest {
 
     @Test
     void executeGlobalDelayed_withFoliaCapabilities_doesNotThrow() {
-        // No stub: the fix never reaches the Bukkit scheduler when regionizedRuntime=true.
+        // Reflection naturally fails in the test JVM (no Folia classes present), so this
+        // now falls through to the standard Bukkit scheduler, matching PaperPlatformScheduler.
+        BukkitTask mockTask = mock(BukkitTask.class);
+        when(bukkitScheduler.runTaskLater(any(Plugin.class), any(Runnable.class), anyLong()))
+                .thenReturn(mockTask);
+
         BukkitPlatformScheduler scheduler =
                 new BukkitPlatformScheduler(plugin, PlatformRuntimeCapabilities.PAPER_FOLIA);
 
@@ -161,22 +174,33 @@ class BukkitPlatformSchedulerFoliaTest {
 
     @Test
     void executeRegion_withFoliaCapabilities_doesNotThrow() {
-        // No stub: the fix never reaches the Bukkit scheduler when regionizedRuntime=true.
+        // Reflection naturally fails in the test JVM (no Folia classes present), so this
+        // now falls through to the standard Bukkit scheduler, matching PaperPlatformScheduler.
+        BukkitTask mockTask = mock(BukkitTask.class);
+        when(bukkitScheduler.runTask(any(Plugin.class), any(Runnable.class))).thenReturn(mockTask);
+
         BukkitPlatformScheduler scheduler =
                 new BukkitPlatformScheduler(plugin, PlatformRuntimeCapabilities.PAPER_FOLIA);
 
         assertDoesNotThrow(() -> scheduler.executeRegion(null, 0, 0, () -> {}));
+        verify(bukkitScheduler).runTask(eq(plugin), any(Runnable.class));
     }
 
     // --- executeRegionDelayed ---
 
     @Test
     void executeRegionDelayed_withFoliaCapabilities_doesNotThrow() {
-        // No stub: the fix never reaches the Bukkit scheduler when regionizedRuntime=true.
+        // Reflection naturally fails in the test JVM (no Folia classes present), so this
+        // now falls through to the standard Bukkit scheduler, matching PaperPlatformScheduler.
+        BukkitTask mockTask = mock(BukkitTask.class);
+        when(bukkitScheduler.runTaskLater(any(Plugin.class), any(Runnable.class), anyLong()))
+                .thenReturn(mockTask);
+
         BukkitPlatformScheduler scheduler =
                 new BukkitPlatformScheduler(plugin, PlatformRuntimeCapabilities.PAPER_FOLIA);
 
         assertDoesNotThrow(() -> scheduler.executeRegionDelayed(null, 0, 0, () -> {}, 20L));
+        verify(bukkitScheduler).runTaskLater(eq(plugin), any(Runnable.class), eq(20L));
     }
 
     // --- teleportAsync ---
